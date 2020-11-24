@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  server:
+    build: ./src/server
+    command: npm run start
+    restart: unless-stopped
+    environment:
+      - PORT=80
+    ports:
+      - "1883:1883"

@@ -1,0 +1,35 @@
+{
+  "name": "mqtt_power_meter_server",
+  "version": "1.0.0",
+  "description": "An MQTT server (broker) for smart power monitoring system to gather data and send it to the ERP system",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run start",
+    "start": "node ./main/index.js",
+    "udp": "node ./main/udp_find.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/illantalex/power_meter_mqtt.git"
+  },
+  "keywords": [
+    "MQTT",
+    "Arduino",
+    "power",
+    "meter",
+    "broker"
+  ],
+  "author": "Illya Antonyuk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/illantalex/power_meter_mqtt/issues"
+  },
+  "homepage": "https://github.com/illantalex/power_meter_mqtt#readme",
+  "dependencies": {
+    "aedes": "^0.44.0",
+    "mqemitter": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}

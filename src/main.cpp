@@ -1,20 +1,15 @@
 #include <Arduino.h>
 #include <PubSubClient.h>
 #include <SPI.h>
-#include <UIPEthernet.h>
+#include <Ethernet.h>
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 signed long next;
 
-IPAddress server(192, 168, 1, 103);
+IPAddress server(192, 168, 1, 102);
 uint8_t mac[6] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 
-IPAddress broadcast(IPAddress ip, IPAddress maska) {
-  IPAddress broad;
-  for (int i = 0; i < 4; ++i) broad[i] = (ip[i] & maska[i]) + ~maska[i];
-  return broad;
-}
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
@@ -24,6 +19,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
+  if (strcmp(topic, "getTime") == 0) {
+    Serial.print("Time:");
+    Serial.println((char*)payload);
+  }
 }
 
 void reconnect() {
@@ -37,6 +36,7 @@ void reconnect() {
       client.publish("test", "hello world");
       // ... and resubscribe
       client.subscribe("inTopic");
+      client.subscribe("getTime");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
