@@ -1,7 +1,7 @@
 const aedes = require("aedes")();
 const server = require("net").createServer(aedes.handle);
 const emitter = require("mqemitter")();
-const port = 1883;
+const port = process.env.PORT;
 
 server.listen(port, function () {
   console.log("Aedes listening on port:", port);
@@ -13,15 +13,18 @@ aedes.on("subscribe", function (subscriptions, client) {
     "MQTT client \x1b[32m" +
       (client ? client.id : client) +
       "\x1b[0m subscribed to topics: " +
-      subscriptions.map((s) => s.topic).join("\n"),
+      subscriptions.map((s) => s.topic).join(", "),
     "from broker",
     aedes.id
   );
-  subscriptions.forEach(topic => {
+  subscriptions.forEach((topic) => {
     if (topic.topic == "getTime") {
-      aedes.publish({ topic: "getTime", payload: `${Math.floor((new Date()).getTime() / 1000)}` });
+      aedes.publish({
+        topic: "getTime",
+        payload: `${Math.floor(new Date().getTime() / 1000)}`,
+      });
     }
-  })
+  });
 });
 
 aedes.on("unsubscribe", function (subscriptions, client) {
@@ -55,14 +58,19 @@ aedes.on("clientDisconnect", function (client) {
 
 // fired when a message is published
 aedes.on("publish", async function (packet, client) {
-  console.log(
-    "Client \x1b[31m" +
-      (client ? client.id : "BROKER_" + aedes.id) +
-      "\x1b[0m has published",
-    packet.payload.toString(),
-    "on",
-    packet.topic,
-    "to broker",
-    aedes.id
-  );
+  // if (packet.payload != aedes.id) {
+    console.log(
+      "Client \x1b[33m" +
+        (client ? client.id : "BROKER_" + aedes.id) +
+        "\x1b[0m has published",
+      packet.payload.toString(),
+      "on",
+      packet.topic,
+      "to broker",
+      aedes.id
+    );
+  if (packet.topic == "sendData") {
+    console.log(packet.payload.toString().toJSON());
+  }
+  // }
 });
