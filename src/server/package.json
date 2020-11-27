@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run start",
     "start": "node ./main/index.js",
-    "udp": "node ./main/udp_find.js"
+    "dev": "nodemon"
   },
   "repository": {
     "type": "git",

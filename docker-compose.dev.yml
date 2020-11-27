@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  server:
+    build: ./src/server
+    command: npm run dev
+    restart: unless-stopped
+    volumes:
+      - ./src/server/:/usr/src/app/
+    environment:
+      - PORT=1883
+    ports:
+      - "1883:1883"
