@@ -6,6 +6,6 @@ services:
     command: npm run start
     restart: unless-stopped
     environment:
-      - PORT=80
+      - PORT=1883
     ports:
       - "1883:1883"
