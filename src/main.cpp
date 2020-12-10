@@ -1,74 +1,54 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
 #include <Ethernet.h>
 #include <PZEM004Tv30.h>
 #include <PubSubClient.h>
-#include <SPI.h>
+
+#define MQTT_PORT 1883
 
 IPAddress server(192, 168, 1, 102);
 uint8_t mac[6] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 char myName[] = "TestArduinoClient";
-#define MQTT_PORT 1883
-
-// char payloadGetTime[] = "";
-// uint8_t payloadGetTimeLength = 0;
-// uint32_t timeInLinuxFormat = 0;
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 PZEM004Tv30 pzem(5, 6);
 
-// uint32_t getTime() {
-//   return timeInLinuxFormat + millis() / 1000;
-// }
+char res[10] = "";
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (uint8_t i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-    // payloadGetTime[i] = (char)payload[i];
+char* float_to_char(float num) {
+  float div = 1000.0;
+  bool flag_first = true;
+  uint8_t i = 0;
+  while (div > 0.0001) {
+    float dig = num / div;
+    int dig_int = dig;
+    if (dig_int != 0 || div == 1) flag_first = false;
+
+    if (!flag_first) {
+      res[i] = dig_int + '0';
+      ++i;
+    }
+    if (div == 1) {
+      res[i] = '.';
+      ++i;
+    }
+    num -= dig_int * div;
+    div /= 10.0;
   }
-  // Serial.println();
-  // Serial.println(payloadGetTime);
-  // payloadGetTimeLength = length;
+  return res;
 }
-
-// void getTimeFromServer() {
-//   client.subscribe("getTime");
-//   while (!*payloadGetTime) {
-//     client.loop();
-//   }
-//   // Serial.println(payloadGetTime);
-//   Serial.print("Payload: ");
-//   for (uint8_t i = 0; i < payloadGetTimeLength; i++) {
-//     Serial.print(payloadGetTime[i]);
-//     timeInLinuxFormat *= 10;
-//     timeInLinuxFormat += payloadGetTime[i] - '0';
-//   }
-//   Serial.print("time in linux format: ");
-//   Serial.println(timeInLinuxFormat);
-//   client.unsubscribe("getTime");
-// }
 
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    // Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect(myName)) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      // ... and resubscribe
-      // client.publish("test", "message");
-      // client.subscribe("getTime");
-      client.publish("sendData", "{name:\"name\"}");
+      // Serial.println("connected");
 
     } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      // Serial.print("failed, rc=");
+      // Serial.print(client.state());
+      // Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -79,48 +59,41 @@ void setup() {
   Serial.begin(9600);
 
   if (!Ethernet.begin(mac)) {
-    Serial.println("Ethernet failed.");
+    // Serial.println("Ethernet failed.");
     return;
   } else {
-    Serial.print("localIP: ");
-    Serial.println(Ethernet.localIP());
-    Serial.print("subnetMask: ");
-    Serial.println(Ethernet.subnetMask());
-    Serial.print("gatewayIP: ");
-    Serial.println(Ethernet.gatewayIP());
-    Serial.print("dnsServerIP: ");
-    Serial.println(Ethernet.dnsServerIP());
+    // Serial.print("localIP: ");
+    // Serial.println(Ethernet.localIP());
+    // Serial.print("subnetMask: ");
+    // Serial.println(Ethernet.subnetMask());
+    // Serial.print("gatewayIP: ");
+    // Serial.println(Ethernet.gatewayIP());
+    // Serial.print("dnsServerIP: ");
+    // Serial.println(Ethernet.dnsServerIP());
   }
 
-  // client.setServer(broadcast(Ethernet.localIP(), Ethernet.subnetMask()), 1883);
   client.setServer(server, MQTT_PORT);
-
-  client.setCallback(callback);
-
   delay(1500);
-  // reconnect();
-  // client.loop();
-  // int mill1 = millis();
-  // getTimeFromServer();
-  // int mill2 = millis();
-  // timeInLinuxFormat -= (mill1 + mill2) / 2000;
 }
 
 void loop() {
   if (!client.connected()) {
     reconnect();
   }
-  // Serial.println(getTime());
-  // client.loop();
-  // DynamicJsonDocument data(32);
-  // data["name"] = myName;
-  // data["time"] = getTime();
-  // data["data"]["voltage"] = pzem.voltage();
-  // data["data"]["current"] = pzem.current();
-  // char output[32];
-  // serializeJson(data, output);
-  client.connect(myName);
-  client.publish("sendData", "{name:\"name\"}");
-  // client.loop();
+
+  float current = pzem.current();
+  if (current != 0) {
+    float voltage = pzem.voltage();
+    char data[32] = "{";
+
+    strcat(data, "\"current\":");
+    strcat(data, float_to_char(current));
+    strcat(data, ",\"voltage\":");
+    strcat(data, float_to_char(voltage));
+    strcat(data, "}");
+    Serial.println(data);
+    client.publish("sendData", data);
+  }
+  client.loop();
   delay(5000);
 }
