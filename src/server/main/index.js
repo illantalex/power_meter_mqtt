@@ -17,14 +17,6 @@ aedes.on("subscribe", function (subscriptions, client) {
     "from broker",
     aedes.id
   );
-  subscriptions.forEach((topic) => {
-    if (topic.topic == "getTime") {
-      aedes.publish({
-        topic: "getTime",
-        payload: `${Math.floor(new Date().getTime() / 1000)}`,
-      });
-    }
-  });
 });
 
 aedes.on("unsubscribe", function (subscriptions, client) {
@@ -59,18 +51,21 @@ aedes.on("clientDisconnect", function (client) {
 // fired when a message is published
 aedes.on("publish", async function (packet, client) {
   // if (packet.payload != aedes.id) {
-    console.log(
-      "Client \x1b[33m" +
-        (client ? client.id : "BROKER_" + aedes.id) +
-        "\x1b[0m has published",
-      packet.payload.toString(),
-      "on",
-      packet.topic,
-      "to broker",
-      aedes.id
-    );
+  console.log(
+    "Client \x1b[33m" +
+      (client ? client.id : "BROKER_" + aedes.id) +
+      "\x1b[0m has published",
+    packet.payload.toString(),
+    "on",
+    packet.topic,
+    "to broker",
+    aedes.id
+  );
   if (packet.topic == "sendData") {
-    console.log(packet.payload.toString().toJSON());
+    const data = JSON.parse(packet.payload.toString());
+    data.myName = client.id;
+    data.timeReceived = Math.floor(new Date().getTime() / 1000);
+    console.log(data);
   }
   // }
 });
